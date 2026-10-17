@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { StagePill } from "../ui/stage-pill";
 import { Stage } from "@/lib/validations/common";
 import { CandidateCard } from "./candidate-card";
-import { ApplicationListItem } from "@/lib/services/applications";
+import type { ApplicationListItem } from "@/types/domain";
 import { Mono } from "../ui/mono";
 import { ChevronDown, ChevronRight, Plus, AlertTriangle } from "lucide-react";
 import { useUiStore } from "@/stores/ui-store";

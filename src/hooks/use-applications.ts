@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { ApplicationListItem, ApplicationListFacets } from "@/lib/services/applications";
+import type { ApplicationListItem, ApplicationListFacets } from "@/types/domain";
 
 interface ApplicationsApiResponse {
   ok: boolean;

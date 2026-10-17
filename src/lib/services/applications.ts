@@ -3,64 +3,13 @@ import { toList, jsonOut } from "../db-compat";
 import { ApplicationQuery, parseSortParam, SortField } from "../validations/application-query";
 import { Stage, ALL_STAGES, ACTIVE_STAGES, TERMINAL_STAGES } from "../validations/common";
 import { computeSlaStatus, SlaState } from "../sla";
+import type {
+  ApplicationListItem,
+  ApplicationListFacets,
+  ApplicationListResult,
+} from "@/types/domain";
+export type { ApplicationListItem, ApplicationListFacets, ApplicationListResult };
 
-export interface ApplicationListItem {
-  id: string;
-  currentStage: Stage;
-  kanbanOrder: number;
-  aiMatchScore: number;
-  stageEnteredAt: string;
-  daysInStage: number;
-  slaDays: number;
-  slaState: SlaState;
-  candidate: {
-    id: string;
-    publicCode: string;
-    fullName: string;
-    email: string;
-    avatarUrl: string | null;
-    currentTitle: string | null;
-    currentCompany: string | null;
-    experienceYears: number;
-    expectedSalary: number | null;
-    skills: string[];
-    tags: string[];
-    source: string;
-    location: string | null;
-  };
-  job: {
-    id: string;
-    code: string;
-    title: string;
-    department: string;
-  };
-  scorecardCount: number;
-  avgScorecard: number | null;
-  lastNoteAt: string | null;
-  appliedAt: string;
-  version: number;
-}
-
-export interface ApplicationListFacets {
-  stages: Record<Stage, number>;
-  departments: Record<string, number>;
-  sources: Record<string, number>;
-  jobs: { id: string; code: string; title: string; count: number }[];
-  slaBreached: number;
-}
-
-export interface ApplicationListResult {
-  items: ApplicationListItem[];
-  facets: ApplicationListFacets;
-  totals: {
-    filtered: number;
-    all: number;
-  };
-  meta: {
-    nextCursor: string | null;
-    hasMore: boolean;
-  };
-}
 
 /**
  * Builds Prisma where clause excluding one facet field (for multi-select faceted counting)

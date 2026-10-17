@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ApplicationListItem } from "@/lib/services/applications";
+import type { ApplicationListItem } from "@/types/domain";
 import { useApplication } from "@/hooks/use-application";
 import { useStageMutation } from "@/hooks/use-stage-mutation";
 import { useCompareStore } from "@/stores/compare-store";

@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Stage } from "@/lib/validations/common";
-import { ApplicationListItem } from "@/lib/services/applications";
+import type { ApplicationListItem } from "@/types/domain";
 import { KanbanColumn } from "./kanban-column";
 import { CandidateCard } from "./candidate-card";
 import { useStageMutation } from "@/hooks/use-stage-mutation";

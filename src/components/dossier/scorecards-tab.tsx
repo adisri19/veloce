@@ -6,8 +6,9 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/input";
 import { Mono } from "../ui/mono";
 import { AlertTriangle, CheckCircle, Plus, Send } from "lucide-react";
-import { computeCalibrationMatrix } from "@/lib/services/scorecards";
+import { computeCalibrationMatrix } from "@/lib/calibration";
 import { useSubmitScorecard } from "@/hooks/use-scorecards";
+
 import { Recommendation } from "@/lib/validations/common";
 
 const RECOMMENDATION_COLORS: Record<Recommendation, { bg: string; text: string; border: string }> = {

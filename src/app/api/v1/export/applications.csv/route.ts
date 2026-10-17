@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ApplicationQuerySchema } from "@/lib/validations/application-query";
 import { getApplications } from "@/lib/services/applications";
+import type { ApplicationListItem } from "@/types/domain";
 import { toCsvString } from "@/lib/csv";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
 
     const result = await getApplications(parsedQuery);
 
-    const flattened = result.items.map((item) => ({
+    const flattened = result.items.map((item: ApplicationListItem) => ({
       ID: item.id,
       CandidateCode: item.candidate.publicCode,
       FullName: item.candidate.fullName,

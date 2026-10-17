@@ -58,7 +58,7 @@ async function verifyAll() {
   if (allApps.totals.all !== 32) throw new Error("Total count mismatch");
 
   // Verify multi-select facet counts match actual counts
-  const stageFacetTotal = Object.values(allApps.facets.stages).reduce((a, b) => a + b, 0);
+  const stageFacetTotal = Object.values(allApps.facets.stages).reduce((a: number, b: number) => a + b, 0);
   if (stageFacetTotal !== 32) {
     throw new Error(`Facet stage sum mismatch: expected 32, got ${stageFacetTotal}`);
   }
@@ -81,7 +81,7 @@ async function verifyAll() {
 
   // 3. Stage transition engine & business rules
   console.log("\n[3/7] Testing Transactional Stage Transition Engine...");
-  const candidateInScreening = allApps.items.find((a) => a.currentStage === "SCREENING")!;
+  const candidateInScreening = allApps.items.find((a: any) => a.currentStage === "SCREENING")!;
   const prevVersion = candidateInScreening.version;
 
   // Optimistic concurrency test (stale version)
@@ -175,7 +175,7 @@ async function verifyAll() {
 
   // 5. Bulk operations atomicity
   console.log("\n[5/7] Testing Transactional Bulk Operations...");
-  const appsToBulk = allApps.items.slice(0, 3).map((a) => a.id);
+  const appsToBulk = allApps.items.slice(0, 3).map((a: any) => a.id);
   const bulkRes = await executeBulkOperation(
     {
       ids: appsToBulk,

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { AnalyticsDashboardData } from "@/lib/services/analytics";
+import type { AnalyticsDashboardData } from "@/types/domain";
 
 interface DashboardFilters {
   from?: string;

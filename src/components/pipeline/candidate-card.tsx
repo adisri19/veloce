@@ -9,8 +9,9 @@ import { ScoreBadge } from "../ui/score-badge";
 import { SlaBadge } from "../ui/sla-badge";
 import { useUiStore } from "@/stores/ui-store";
 import { useSelectionStore } from "@/stores/selection-store";
-import { ApplicationListItem } from "@/lib/services/applications";
+import type { ApplicationListItem } from "@/types/domain";
 import { MessageSquare, Star, GripVertical } from "lucide-react";
+
 
 export interface CandidateCardProps {
   application: ApplicationListItem;

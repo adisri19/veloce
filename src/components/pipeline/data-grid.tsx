@@ -7,7 +7,7 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ApplicationListItem } from "@/lib/services/applications";
+import type { ApplicationListItem } from "@/types/domain";
 import { useSelectionStore } from "@/stores/selection-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useUrlFilters } from "@/hooks/use-url-filters";
