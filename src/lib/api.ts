@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ZodError, ZodSchema } from "zod";
+import { ZodError, ZodSchema, ZodType } from "zod";
 import { Actor, getActor } from "./auth";
 import { RoleType } from "./validations/common";
 
@@ -97,13 +97,13 @@ export function apiError(
   return NextResponse.json(envelope, { status: statusCode });
 }
 
-export interface WithApiOptions<TBody, TQuery> {
-  schema?: ZodSchema<TBody>;
-  querySchema?: ZodSchema<TQuery>;
+export interface WithApiOptions<TBody = any, TQuery = any> {
+  schema?: ZodType<TBody, any, any>;
+  querySchema?: ZodType<TQuery, any, any>;
   roles?: RoleType[];
 }
 
-export interface ApiHandlerContext<TBody = unknown, TQuery = unknown> {
+export interface ApiHandlerContext<TBody = any, TQuery = any> {
   actor: Actor;
   body: TBody;
   query: TQuery;
@@ -111,7 +111,7 @@ export interface ApiHandlerContext<TBody = unknown, TQuery = unknown> {
   req: Request;
 }
 
-export function withApi<TBody = unknown, TQuery = unknown, TRes = unknown>(
+export function withApi<TBody = any, TQuery = any, TRes = any>(
   handler: (ctx: ApiHandlerContext<TBody, TQuery>) => Promise<{ data: TRes; meta?: Record<string, unknown>; status?: number } | void>,
   options?: WithApiOptions<TBody, TQuery>
 ) {

@@ -249,6 +249,7 @@ export async function parseAndScoreCandidate(input: ParseAndScoreInput, actor: A
           currentTitle: mergedCandidate.currentTitle,
           currentCompany: mergedCandidate.currentCompany,
           skills: mergedCandidate.skills,
+          tags: [],
           experienceYears: mergedCandidate.experienceYears,
           expectedSalary: mergedCandidate.expectedSalary || undefined,
           noticePeriodDays: mergedCandidate.noticePeriodDays || undefined,

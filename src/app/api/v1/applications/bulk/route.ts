@@ -4,7 +4,7 @@ import { executeBulkOperation } from "@/lib/services/bulk";
 
 export const POST = withApi(
   async ({ body, actor }) => {
-    const result = await executeBulkOperation(body, actor);
+    const result = await executeBulkOperation(body as any, actor);
     return { data: result };
   },
   {

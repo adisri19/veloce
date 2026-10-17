@@ -88,6 +88,8 @@ export const ACTIVE_STAGES: Stage[] = [
   "OFFER",
 ];
 
+export const STAGE_ORDER: Stage[] = ACTIVE_STAGES;
+
 export const TERMINAL_STAGES: Stage[] = ["HIRED", "REJECTED", "WITHDRAWN"];
 
 export const DEFAULT_SLA_DAYS: Record<Stage, number> = {

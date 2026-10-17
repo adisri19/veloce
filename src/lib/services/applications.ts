@@ -37,6 +37,7 @@ export interface ApplicationListItem {
   scorecardCount: number;
   avgScorecard: number | null;
   lastNoteAt: string | null;
+  appliedAt: string;
   version: number;
 }
 
@@ -65,7 +66,7 @@ export interface ApplicationListResult {
  * Builds Prisma where clause excluding one facet field (for multi-select faceted counting)
  */
 function buildWhereClause(
-  query: ApplicationQuery,
+  query: Partial<ApplicationQuery>,
   excludeField?: "stages" | "departments" | "sources" | "jobs" | "slaBreached"
 ): any {
   const andClauses: any[] = [];
@@ -145,7 +146,7 @@ function buildWhereClause(
   return andClauses.length > 0 ? { AND: andClauses } : {};
 }
 
-export async function getApplications(query: ApplicationQuery): Promise<ApplicationListResult> {
+export async function getApplications(query: Partial<ApplicationQuery> = {}): Promise<ApplicationListResult> {
   const now = new Date();
   const where = buildWhereClause(query);
 
@@ -263,6 +264,7 @@ export async function getApplications(query: ApplicationQuery): Promise<Applicat
       scorecardCount: app.scorecards.length,
       avgScorecard,
       lastNoteAt: app.notes[0]?.createdAt ? app.notes[0].createdAt.toISOString() : null,
+      appliedAt: app.appliedAt.toISOString(),
       version: app.version,
     };
 

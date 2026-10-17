@@ -2,6 +2,8 @@ import { withApi } from "@/lib/api";
 import { ApplicationQuerySchema } from "@/lib/validations/application-query";
 import { getApplications } from "@/lib/services/applications";
 
+export const dynamic = "force-dynamic";
+
 export const GET = withApi(
   async ({ query }) => {
     const result = await getApplications(query);

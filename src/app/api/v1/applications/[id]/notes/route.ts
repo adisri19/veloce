@@ -9,7 +9,7 @@ export const GET = withApi(async ({ params, actor }) => {
 
 export const POST = withApi(
   async ({ params, body, actor }) => {
-    const note = await createNote(params.id!, body, actor);
+    const note = await createNote(params.id!, body as any, actor);
     return { data: note, status: 201 };
   },
   {

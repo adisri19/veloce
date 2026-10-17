@@ -19,7 +19,7 @@ export const GET = withApi(async ({ params }) => {
 
 export const POST = withApi(
   async ({ params, body, actor }) => {
-    const result = await scheduleInterview(params.id!, body, actor);
+    const result = await scheduleInterview(params.id!, body as any, actor);
     return {
       data: result.interview,
       meta: { warnings: result.warnings },

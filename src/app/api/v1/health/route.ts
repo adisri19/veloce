@@ -1,6 +1,8 @@
 import { withApi } from "@/lib/api";
 import { prisma, isSqlite } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export const GET = withApi(async () => {
   const userCount = await prisma.user.count();
   return {

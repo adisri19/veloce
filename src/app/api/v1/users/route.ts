@@ -1,6 +1,8 @@
 import { withApi } from "@/lib/api";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export const GET = withApi(async () => {
   const users = await prisma.user.findMany({
     where: { isActive: true },

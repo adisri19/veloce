@@ -2,6 +2,8 @@ import { withApi } from "@/lib/api";
 import { JobCreateSchema } from "@/lib/validations/job";
 import { getJobs, createJob } from "@/lib/services/jobs";
 
+export const dynamic = "force-dynamic";
+
 export const GET = withApi(async ({ req }) => {
   const url = new URL(req.url);
   const department = url.searchParams.get("department") || undefined;
@@ -12,7 +14,7 @@ export const GET = withApi(async ({ req }) => {
 
 export const POST = withApi(
   async ({ body, actor }) => {
-    const job = await createJob(body, actor);
+    const job = await createJob(body as any, actor);
     return { data: job, status: 201 };
   },
   {

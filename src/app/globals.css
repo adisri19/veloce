@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: #FAFAFA;
+  --panel: #FFFFFF;
+  --card: #FFFFFF;
+  --hairline: #E4E4E7;
+  --fg: #09090B;
+  --fg-muted: #52525B;
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --primary-muted: rgba(79, 70, 229, 0.1);
+  --success: #059669;
+  --success-surface: rgba(5, 150, 105, 0.1);
+  --warn: #D97706;
+  --warn-surface: rgba(217, 119, 6, 0.1);
+  --danger: #E11D48;
+  --danger-surface: rgba(225, 29, 72, 0.1);
+}
+
+.dark {
+  --canvas: #09090B;
+  --panel: #121215;
+  --card: #18181B;
+  --hairline: #27272A;
+  --fg: #FAFAFA;
+  --fg-muted: #A1A1AA;
+  --primary: #6366F1;
+  --primary-hover: #818CF8;
+  --primary-muted: rgba(99, 102, 241, 0.15);
+  --success: #34D399;
+  --success-surface: rgba(52, 211, 153, 0.12);
+  --warn: #FBBF24;
+  --warn-surface: rgba(251, 191, 36, 0.12);
+  --danger: #FB7185;
+  --danger-surface: rgba(251, 113, 133, 0.12);
+}
+
+* {
+  border-color: var(--hairline);
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--fg);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-muted);
+}

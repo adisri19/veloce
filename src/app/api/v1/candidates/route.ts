@@ -2,6 +2,8 @@ import { withApi } from "@/lib/api";
 import { CandidateCreateSchema } from "@/lib/validations/candidate";
 import { getCandidates, createCandidate } from "@/lib/services/candidates";
 
+export const dynamic = "force-dynamic";
+
 export const GET = withApi(async ({ req }) => {
   const url = new URL(req.url);
   const source = url.searchParams.get("source") || undefined;
@@ -12,7 +14,7 @@ export const GET = withApi(async ({ req }) => {
 
 export const POST = withApi(
   async ({ body, actor }) => {
-    const result = await createCandidate(body, actor);
+    const result = await createCandidate(body as any, actor);
     return { data: result, status: 201 };
   },
   {

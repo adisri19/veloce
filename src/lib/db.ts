@@ -3,22 +3,22 @@ import { PrismaClient as PostgresPrismaClient } from "@prisma/client";
 // Global declaration to prevent multiple client instances during dev hot-reloads
 declare global {
   // eslint-disable-next-line no-var
-  var __veloce_prisma__: any;
+  var __veloce_prisma__: PostgresPrismaClient | undefined;
 }
 
 export const isSqlite =
   process.env.DATABASE_URL?.startsWith("file:") ||
   process.env.DATABASE_URL?.includes(".db");
 
-export function createPrismaClient() {
+export function createPrismaClient(): PostgresPrismaClient {
   if (isSqlite) {
     try {
       // Dynamic require of generated sqlite client
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // eslint-disable-next-line
       const { PrismaClient: SqlitePrismaClient } = require(".prisma/client-sqlite");
       return new SqlitePrismaClient({
         log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
-      });
+      }) as unknown as PostgresPrismaClient;
     } catch {
       // Fallback if client-sqlite is not yet generated or imported differently
       return new PostgresPrismaClient({
@@ -32,7 +32,7 @@ export function createPrismaClient() {
   });
 }
 
-export function getPrismaClient() {
+export function getPrismaClient(): PostgresPrismaClient {
   if (process.env.NODE_ENV === "production") {
     return createPrismaClient();
   }
@@ -44,4 +44,4 @@ export function getPrismaClient() {
   return global.__veloce_prisma__;
 }
 
-export const prisma = getPrismaClient();
+export const prisma: PostgresPrismaClient = getPrismaClient();

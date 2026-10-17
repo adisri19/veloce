@@ -3,6 +3,8 @@ import { ApplicationQuerySchema } from "@/lib/validations/application-query";
 import { getApplications } from "@/lib/services/applications";
 import { toCsvString } from "@/lib/csv";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
