@@ -1,0 +1,326 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───────────────────────── ENUMS ─────────────────────────
+enum RoleType {
+  ADMIN
+  HIRING_MANAGER
+  INTERVIEWER
+  RECRUITER
+}
+
+enum Stage {
+  SOURCED
+  APPLIED
+  SCREENING
+  TECHNICAL_INTERVIEW
+  SYSTEM_DESIGN
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum JobStatus {
+  OPEN
+  PAUSED
+  CLOSED
+}
+
+enum Recommendation {
+  STRONG_NO
+  NO
+  NEUTRAL
+  YES
+  STRONG_YES
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+}
+
+// ───────────────────────── MODELS ─────────────────────────
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  avatarUrl   String?
+  role        RoleType
+  department  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  managedJobs  JobRequisition[]     @relation("JobHiringManager")
+  scorecards   Scorecard[]
+  notes        CandidateNote[]
+  transitions  StageTransitionLog[]
+  auditLogs    AuditLog[]
+
+  @@index([role])
+  @@index([department])
+}
+
+model JobRequisition {
+  id              String         @id @default(cuid())
+  code            String         @unique // REQ-2026-01
+  title           String
+  department      String
+  location        String
+  workMode        WorkMode       @default(HYBRID)
+  employmentType  EmploymentType @default(FULL_TIME)
+  description     String         @db.Text
+  requiredSkills  String[]
+  niceToHaveSkills String[]
+  domainKeywords  String[]
+  minExperienceYears Int         @default(0)
+  maxExperienceYears Int         @default(15)
+  salaryMin       Int
+  salaryMax       Int
+  currency        String         @default("USD")
+  headcountTotal  Int            @default(1)
+  headcountFilled Int            @default(0)
+  status          JobStatus      @default(OPEN)
+  priority        Priority       @default(MEDIUM)
+  // { "APPLIED": 3, "SCREENING": 5, "TECHNICAL_INTERVIEW": 7, ... } days allowed per stage
+  slaDaysPerStage Json
+  hiringManagerId String
+  openedAt        DateTime       @default(now())
+  closedAt        DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  hiringManager User          @relation("JobHiringManager", fields: [hiringManagerId], references: [id], onDelete: Restrict)
+  applications  Application[]
+
+  @@index([status, department])
+  @@index([hiringManagerId])
+  @@index([openedAt])
+}
+
+model Candidate {
+  id               String   @id @default(cuid())
+  publicCode       String   @unique // CAND-1042
+  fullName         String
+  email            String   @unique
+  phone            String?
+  avatarUrl        String?
+  location         String?
+  timezone         String?
+  currentCompany   String?
+  currentTitle     String?
+  experienceYears  Int      @default(0)
+  expectedSalary   Int?
+  noticePeriodDays Int?
+  linkedinUrl      String?
+  githubUrl        String?
+  portfolioUrl     String?
+  resumeUrl        String?
+  parsedResumeText String   @db.Text @default("")
+  skills           String[]
+  tags             String[]
+  source           String   // Referral | LinkedIn | Inbound | Executive Search | Job Board | Agency
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  applications Application[]
+
+  @@index([source])
+  @@index([experienceYears])
+  @@index([fullName])
+  @@index([createdAt])
+}
+
+model Application {
+  id               String    @id @default(cuid())
+  candidateId      String
+  jobId            String
+  currentStage     Stage     @default(APPLIED)
+  kanbanOrder      Float     @default(1000) // fractional indexing within (jobId-agnostic) stage column
+  aiMatchScore     Int       @default(0)
+  aiScoreBreakdown Json?
+  stageEnteredAt   DateTime  @default(now())
+  rejectionReason  String?
+  rejectionNotes   String?   @db.Text
+  isArchived       Boolean   @default(false)
+  version          Int       @default(0) // optimistic concurrency token
+  appliedAt        DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  candidate   Candidate            @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job         JobRequisition       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  scorecards  Scorecard[]
+  interviews  InterviewEvent[]
+  notes       CandidateNote[]
+  transitions StageTransitionLog[]
+
+  @@unique([candidateId, jobId])
+  @@index([currentStage, kanbanOrder])
+  @@index([jobId, currentStage])
+  @@index([stageEnteredAt])
+  @@index([aiMatchScore])
+  @@index([isArchived, currentStage])
+}
+
+model Scorecard {
+  id                   String         @id @default(cuid())
+  applicationId        String
+  interviewerId        String
+  stage                Stage
+  technicalScore       Int            // 1-5
+  architectureScore    Int            // 1-5
+  problemSolvingScore  Int            // 1-5
+  communicationScore   Int            // 1-5
+  cultureScore         Int            // 1-5
+  overallRecommendation Recommendation
+  strengths            String         @db.Text
+  concerns             String         @db.Text
+  submittedAt          DateTime       @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewer User        @relation(fields: [interviewerId], references: [id], onDelete: Restrict)
+
+  @@unique([applicationId, interviewerId, stage])
+  @@index([applicationId])
+  @@index([interviewerId])
+}
+
+model InterviewEvent {
+  id             String          @id @default(cuid())
+  applicationId  String
+  title          String
+  stage          Stage
+  startTime      DateTime
+  endTime        DateTime
+  meetingLink    String?
+  interviewerIds String[]
+  status         InterviewStatus @default(SCHEDULED)
+  createdAt      DateTime        @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([startTime])
+  @@index([status])
+}
+
+model CandidateNote {
+  id            String   @id @default(cuid())
+  applicationId String
+  authorId      String
+  parentId      String?  // threading
+  content       String   @db.Text
+  mentions      String[] // User ids
+  isPrivate     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  parent      CandidateNote?  @relation("NoteThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     CandidateNote[] @relation("NoteThread")
+
+  @@index([applicationId, createdAt])
+  @@index([authorId])
+}
+
+model StageTransitionLog {
+  id                              String   @id @default(cuid())
+  applicationId                   String
+  fromStage                       Stage?
+  toStage                         Stage
+  movedById                       String
+  durationInPreviousStageSeconds  Int      @default(0)
+  reason                          String?
+  timestamp                       DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  movedBy     User        @relation(fields: [movedById], references: [id], onDelete: Restrict)
+
+  @@index([applicationId, timestamp])
+  @@index([fromStage, toStage])
+  @@index([timestamp])
+}
+
+// Append-only. No UPDATE or DELETE ever issued by application code.
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String   // Application | Candidate | JobRequisition | Scorecard | ...
+  entityId   String
+  action     String   // STAGE_CHANGED | CREATED | UPDATED | BULK_ARCHIVE | SEED_RESET | ...
+  actorId    String?
+  metadata   Json
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+// ── Automation / webhook dispatcher ──
+model AutomationRule {
+  id          String   @id @default(cuid())
+  name        String
+  trigger     String   // STAGE_ENTERED | SLA_BREACHED | SCORECARD_SUBMITTED | HIRED
+  conditions  Json     // e.g. { "toStage": "OFFER", "minScore": 80 }
+  actionType  String   // WEBHOOK | CREATE_NOTE | NOTIFY_INTERVIEWER
+  actionConfig Json    // e.g. { "url": "...", "secret": "..." }
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  deliveries WebhookDelivery[]
+
+  @@index([trigger, isActive])
+}
+
+model WebhookDelivery {
+  id            String   @id @default(cuid())
+  ruleId        String
+  event         String
+  payload       Json
+  status        String   @default("PENDING") // PENDING | DELIVERED | FAILED
+  attempts      Int      @default(0)
+  responseCode  Int?
+  lastError     String?
+  nextAttemptAt DateTime?
+  createdAt     DateTime @default(now())
+
+  rule AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+}
