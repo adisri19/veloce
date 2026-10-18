@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,18 +11,22 @@ import type { ApplicationListItem } from "@/types/domain";
 import { useSelectionStore } from "@/stores/selection-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { useStageMutation } from "@/hooks/use-stage-mutation";
 import { Avatar } from "../ui/avatar";
 import { Mono } from "../ui/mono";
 import { StagePill } from "../ui/stage-pill";
-import { ScoreBadge } from "../ui/score-badge";
-import { SlaBadge } from "../ui/sla-badge";
+import { ScoreRing } from "../ui/score-ring";
+import { SlaChip } from "../ui/sla-chip";
+import { Stage, ALL_STAGES } from "@/lib/validations/common";
 import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   Star,
+  ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
+import { clsx } from "clsx";
 
 export interface DataGridProps {
   applications: ApplicationListItem[];
@@ -34,7 +38,18 @@ export function DataGrid({ applications }: DataGridProps) {
   const { selectedIds, toggle, selectRange, selectAll, clear } = useSelectionStore();
   const setActiveDossierId = useUiStore((s) => s.setActiveDossierId);
   const { filters, updateFilters } = useUrlFilters();
+  const stageMutation = useStageMutation();
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
+  const [activeStageMenuAppId, setActiveStageMenuAppId] = useState<string | null>(null);
+
+  // Esc key clears selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") clear();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [clear]);
 
   const handleSortToggle = useCallback(
     (field: string) => {
@@ -94,6 +109,18 @@ export function DataGrid({ applications }: DataGridProps) {
     }
   }, [allVisibleSelected, applications, clear, selectAll]);
 
+  const handleQuickChangeStage = (app: ApplicationListItem, newStage: Stage, e: React.MouseEvent) => {
+    e.stopPropagation();
+    stageMutation.mutate({
+      applicationId: app.id,
+      input: {
+        toStage: newStage,
+        expectedVersion: app.version,
+      },
+    });
+    setActiveStageMenuAppId(null);
+  };
+
   const columns = useMemo(
     () => [
       columnHelper.display({
@@ -141,17 +168,17 @@ export function DataGrid({ applications }: DataGridProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <Avatar
               name={row.original.candidate.fullName}
               src={row.original.candidate.avatarUrl}
               size="xs"
             />
             <div className="flex items-center gap-1.5 min-w-0 truncate">
-              <span className="text-xs font-medium text-fg truncate">
+              <span className="text-xs font-semibold text-fg truncate">
                 {row.original.candidate.fullName}
               </span>
-              <Mono className="text-[10px] text-fg-muted font-normal">
+              <Mono className="text-[10px] text-fg-muted font-normal whitespace-nowrap">
                 {row.original.candidate.publicCode}
               </Mono>
             </div>
@@ -163,12 +190,12 @@ export function DataGrid({ applications }: DataGridProps) {
         id: "job",
         header: "Requisition",
         cell: ({ row }) => (
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-medium text-fg truncate">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Mono className="text-xs font-mono font-semibold text-fg whitespace-nowrap">
+              {row.original.job.code}
+            </Mono>
+            <span className="text-fg-muted text-[11px] truncate">
               {row.original.job.title}
-            </span>
-            <span className="text-[10px] font-mono text-fg-muted truncate">
-              {row.original.job.code} • {row.original.job.department}
             </span>
           </div>
         ),
@@ -185,7 +212,43 @@ export function DataGrid({ applications }: DataGridProps) {
             {getSortIcon("currentStage")}
           </button>
         ),
-        cell: ({ row }) => <StagePill stage={row.original.currentStage} size="sm" />,
+        cell: ({ row }) => {
+          const app = row.original;
+          const isMenuOpen = activeStageMenuAppId === app.id;
+          return (
+            <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() =>
+                  setActiveStageMenuAppId(isMenuOpen ? null : app.id)
+                }
+                className="flex items-center gap-1 group"
+                title="Click to quick-change stage"
+              >
+                <StagePill stage={app.currentStage} size="sm" />
+                <ChevronDown className="w-3 h-3 text-fg-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+
+              {isMenuOpen && (
+                <div className="absolute top-full mt-1 left-0 w-44 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl py-1 z-50 flex flex-col max-h-56 overflow-y-auto">
+                  {ALL_STAGES.map((st) => (
+                    <button
+                      key={st}
+                      onClick={(e) => handleQuickChangeStage(app, st, e)}
+                      className={clsx(
+                        "text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between",
+                        st === app.currentStage
+                          ? "bg-primary/20 text-primary font-bold"
+                          : "text-fg-muted hover:text-fg hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <span>{st.replace(/_/g, " ")}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        },
       }),
 
       columnHelper.accessor("aiMatchScore", {
@@ -200,7 +263,9 @@ export function DataGrid({ applications }: DataGridProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <ScoreBadge score={row.original.aiMatchScore} size="sm" />
+          <div className="flex items-center">
+            <ScoreRing score={row.original.aiMatchScore} size="xs" />
+          </div>
         ),
       }),
 
@@ -216,12 +281,37 @@ export function DataGrid({ applications }: DataGridProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <SlaBadge
+          <SlaChip
             slaState={row.original.slaState}
             daysInStage={row.original.daysInStage}
             slaDays={row.original.slaDays}
           />
         ),
+      }),
+
+      columnHelper.display({
+        id: "skills",
+        header: "Skills",
+        cell: ({ row }) => {
+          const skills = row.original.candidate.skills || [];
+          return (
+            <div className="flex items-center gap-1 overflow-hidden">
+              {skills.slice(0, 2).map((sk) => (
+                <span
+                  key={sk}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.03] border border-white/[0.06] text-fg-muted font-mono truncate max-w-[70px]"
+                >
+                  {sk}
+                </span>
+              ))}
+              {skills.length > 2 && (
+                <span className="text-[10px] text-fg-muted font-mono">
+                  +{skills.length - 2}
+                </span>
+              )}
+            </div>
+          );
+        },
       }),
 
       columnHelper.accessor("candidate.experienceYears", {
@@ -236,11 +326,8 @@ export function DataGrid({ applications }: DataGridProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <div className="text-xs text-fg flex items-center gap-1">
+          <div className="text-xs text-fg flex items-center gap-1 font-mono">
             <Mono>{row.original.candidate.experienceYears}y</Mono>
-            <span className="text-fg-muted text-[11px] truncate max-w-[120px]">
-              {row.original.candidate.currentTitle}
-            </span>
           </div>
         ),
       }),
@@ -257,7 +344,7 @@ export function DataGrid({ applications }: DataGridProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <span className="text-xs font-mono text-fg-muted">
+          <span className="text-xs font-mono text-fg-muted whitespace-nowrap">
             {row.original.candidate.expectedSalary
               ? `$${(row.original.candidate.expectedSalary / 1000).toFixed(0)}k`
               : "—"}
@@ -269,7 +356,7 @@ export function DataGrid({ applications }: DataGridProps) {
         id: "source",
         header: "Source",
         cell: ({ row }) => (
-          <span className="text-[11px] px-2 py-0.5 rounded bg-hairline text-fg-muted font-medium truncate max-w-[90px] inline-block">
+          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-white/[0.03] border border-white/[0.05] text-fg-muted font-medium truncate max-w-[90px] inline-block">
             {row.original.candidate.source}
           </span>
         ),
@@ -280,11 +367,11 @@ export function DataGrid({ applications }: DataGridProps) {
         header: "Scorecards",
         cell: ({ row }) => {
           if (row.original.scorecardCount === 0) {
-            return <span className="text-xs text-fg-muted/40">—</span>;
+            return <span className="text-xs text-fg-muted/40 font-mono">—</span>;
           }
           return (
             <div className="flex items-center gap-1.5 text-xs font-mono">
-              <span className="flex items-center gap-1 text-amber-500 font-semibold">
+              <span className="flex items-center gap-1 text-amber-400 font-semibold">
                 <Star className="w-3 h-3 fill-amber-400" />
                 <span>{row.original.avgScorecard}</span>
               </span>
@@ -308,7 +395,7 @@ export function DataGrid({ applications }: DataGridProps) {
           </button>
         ),
         cell: ({ row }) => (
-          <span className="text-xs font-mono text-fg-muted">
+          <span className="text-xs font-mono text-fg-muted whitespace-nowrap">
             {format(new Date(row.original.appliedAt), "MMM d, yyyy")}
           </span>
         ),
@@ -318,6 +405,7 @@ export function DataGrid({ applications }: DataGridProps) {
       selectedIds,
       allVisibleSelected,
       someVisibleSelected,
+      activeStageMenuAppId,
       getSortIcon,
       handleCheckboxClick,
       handleHeaderCheckbox,
@@ -334,7 +422,7 @@ export function DataGrid({ applications }: DataGridProps) {
   return (
     <div className="flex-1 overflow-auto border-t border-hairline bg-panel select-none">
       <table className="w-full text-left border-collapse">
-        <thead className="sticky top-0 z-10 bg-panel/95 backdrop-blur-sm border-b border-hairline">
+        <thead className="sticky top-0 z-10 bg-panel/95 backdrop-blur-md border-b border-hairline">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id} className="h-9">
               {headerGroup.headers.map((header) => (
@@ -361,9 +449,10 @@ export function DataGrid({ applications }: DataGridProps) {
               <tr
                 key={row.id}
                 onClick={() => setActiveDossierId(row.original.id)}
-                className={`h-9 hover:bg-hairline/40 transition-colors cursor-pointer ${
-                  isSelected ? "bg-primary/10 hover:bg-primary/15" : ""
-                }`}
+                className={clsx(
+                  "h-9 hover:bg-white/[0.04] transition-colors cursor-pointer",
+                  isSelected && "bg-primary/10 hover:bg-primary/15"
+                )}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td
