@@ -1,19 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { motion } from "framer-motion";
 import { Stage } from "@/lib/validations/common";
+import { STAGE_THEME } from "@/lib/stage-theme";
 import { Mono } from "../ui/mono";
-import { ArrowRight, Filter } from "lucide-react";
+import { ArrowDown, AlertTriangle, Filter, TrendingDown } from "lucide-react";
+import { clsx } from "clsx";
 
 export interface FunnelChartProps {
   stages: {
@@ -28,135 +22,189 @@ export interface FunnelChartProps {
   }[];
 }
 
-const STAGE_COLORS: Record<string, string> = {
-  SOURCED: "#64748B",
-  APPLIED: "#3B82F6",
-  SCREENING: "#6366F1",
-  TECHNICAL_INTERVIEW: "#8B5CF6",
-  SYSTEM_DESIGN: "#EC4899",
-  OFFER: "#F59E0B",
-  HIRED: "#10B981",
-};
-
 export function FunnelChart({ stages }: FunnelChartProps) {
   const router = useRouter();
+  const [hoveredStage, setHoveredStage] = useState<string | null>(null);
 
-  const chartData = stages.map((s) => ({
-    name: s.stage.replace(/_/g, " "),
-    stage: s.stage,
-    volume: s.reached,
-    stepConversion: s.stepConversionPct,
-    cumulative: s.cumulativePct,
-    dropOff: s.dropOff,
-    inFlight: s.inFlight,
-    rejected: s.rejected,
-    withdrawn: s.withdrawn,
-    color: STAGE_COLORS[s.stage] || "#6366F1",
-  }));
+  const maxVolume = Math.max(...stages.map((s) => s.reached), 1);
 
-  const handleBarClick = (entry: any) => {
-    if (entry && entry.stage) {
-      router.push(`/pipeline?stages=${entry.stage}`);
+  // Compute biggest leak
+  let biggestLeak = { from: "", to: "", dropPct: 0 };
+  for (let i = 0; i < stages.length - 1; i++) {
+    const current = stages[i];
+    const next = stages[i + 1];
+    if (current && next) {
+      const dropPct = 100 - next.stepConversionPct;
+      if (dropPct > biggestLeak.dropPct) {
+        biggestLeak = {
+          from: STAGE_THEME[current.stage]?.label || current.stage,
+          to: STAGE_THEME[next.stage]?.label || next.stage,
+          dropPct: Math.round(dropPct),
+        };
+      }
     }
+  }
+
+  const handleStageClick = (stage: Stage) => {
+    router.push(`/pipeline?stages=${stage}`);
   };
 
   return (
-    <div className="p-4 bg-panel border border-hairline rounded-lg shadow-xs flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <div className="p-5 bg-panel border border-hairline rounded-xl shadow-xs flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-bold text-fg">
-            Pipeline Conversion Waterfall
-          </h3>
-          <p className="text-xs text-fg-muted">
-            Candidate pass-through rate across hiring stages (click bar to filter)
+          <div className="flex items-center gap-2.5">
+            <h3 className="text-sm font-semibold text-fg">
+              Pipeline Conversion Waterfall
+            </h3>
+            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-mono font-medium">
+              <Filter className="w-2.5 h-2.5" />
+              <span>Interactive</span>
+            </span>
+          </div>
+          <p className="text-xs text-fg-muted mt-0.5">
+            Candidate pass-through rate across hiring stages (click to inspect stage in pipeline)
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-fg-muted font-mono">
-          <Filter className="w-3.5 h-3.5" />
-          <span>Interactive</span>
-        </div>
+
+        {biggestLeak.dropPct > 0 && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-medium self-start sm:self-auto">
+            <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+            <span>
+              Biggest leak: {biggestLeak.from} → {biggestLeak.to} (
+              <span className="font-mono">-{biggestLeak.dropPct}%</span>)
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-          >
-            <XAxis type="number" hide />
-            <YAxis
-              dataKey="name"
-              type="category"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "var(--fg-muted)", fontSize: 11 }}
-              width={110}
-            />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (!active || !payload || !payload.length || !payload[0]) return null;
-                const data = payload[0].payload;
-                return (
-                  <div className="bg-panel border border-hairline rounded-lg p-3 shadow-xl text-xs flex flex-col gap-1.5">
-                    <span className="font-bold text-fg">{data.name}</span>
-                    <div className="flex items-center justify-between gap-4 text-fg-muted font-mono">
-                      <span>Ever Reached:</span>
-                      <span className="font-bold text-fg">{data.volume}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4 text-fg-muted font-mono">
-                      <span>Step Conversion:</span>
-                      <span className="font-bold text-primary">{data.stepConversion}%</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4 text-fg-muted font-mono">
-                      <span>Cumulative Pass:</span>
-                      <span className="font-bold text-emerald-500">{data.cumulative}%</span>
-                    </div>
-                    {data.dropOff > 0 && (
-                      <div className="pt-1.5 border-t border-hairline flex flex-col gap-0.5 text-[11px] text-fg-muted">
-                        <span>Drop-off: {data.dropOff} candidates</span>
-                        <span>({data.rejected} rejected, {data.withdrawn} withdrawn)</span>
-                      </div>
+      {/* Waterfall Bars with Floating Conversion Chips */}
+      <div className="flex flex-col gap-2 pt-2">
+        {stages.map((st, i) => {
+          const theme = STAGE_THEME[st.stage] || {
+            label: st.stage,
+            color: "#6366F1",
+            bg: "rgba(99, 102, 241, 0.15)",
+            border: "rgba(99, 102, 241, 0.3)",
+          };
+          const widthPct = Math.max(12, Math.round((st.reached / maxVolume) * 100));
+          const isDimmed = hoveredStage !== null && hoveredStage !== st.stage;
+          const isHovered = hoveredStage === st.stage;
+          const nextStage = stages[i + 1];
+
+          return (
+            <React.Fragment key={st.stage}>
+              {/* Stage Bar */}
+              <motion.div
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.04 }}
+                onMouseEnter={() => setHoveredStage(st.stage)}
+                onMouseLeave={() => setHoveredStage(null)}
+                onClick={() => handleStageClick(st.stage)}
+                className={clsx(
+                  "relative group cursor-pointer transition-all duration-200 rounded-lg p-1.5",
+                  isDimmed && "opacity-40",
+                  isHovered && "ring-1 ring-primary/40 bg-white/[0.02]"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Stage Label */}
+                  <div className="w-32 shrink-0 flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                      style={{ backgroundColor: theme.color }}
+                    />
+                    <span className="text-xs font-medium text-fg truncate">
+                      {theme.label}
+                    </span>
+                  </div>
+
+                  {/* Bar Graphic */}
+                  <div className="flex-1 h-8 rounded-md bg-white/[0.02] border border-white/[0.04] relative overflow-hidden flex items-center">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${widthPct}%` }}
+                      transition={{ duration: 0.5, delay: i * 0.05, ease: "easeOut" }}
+                      className="h-full rounded-md flex items-center justify-between px-3 text-xs font-semibold shadow-inner relative overflow-hidden"
+                      style={{
+                        background: `linear-gradient(90deg, ${theme.color} 0%, ${theme.color}CC 100%)`,
+                        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.25)`,
+                      }}
+                    >
+                      <span className="text-white drop-shadow-xs font-mono">
+                        <Mono>{st.reached}</Mono>
+                      </span>
+                      {widthPct > 28 && (
+                        <span className="text-white/80 font-mono text-[11px] hidden sm:inline">
+                          {st.cumulativePct}% cum.
+                        </span>
+                      )}
+                    </motion.div>
+
+                    {/* Stats details visible beside bar if small */}
+                    {widthPct <= 28 && (
+                      <span className="ml-2 text-xs font-mono text-fg-muted">
+                        {st.cumulativePct}% cum.
+                      </span>
+                    )}
+
+                    {st.dropOff > 0 && (
+                      <span className="ml-auto mr-3 text-[11px] font-mono text-fg-muted hidden md:inline">
+                        -{st.dropOff} drop ({st.rejected} rej, {st.withdrawn} w/d)
+                      </span>
                     )}
                   </div>
-                );
-              }}
-            />
-            <Bar
-              dataKey="volume"
-              radius={[0, 4, 4, 0]}
-              cursor="pointer"
-              onClick={handleBarClick}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+                </div>
 
-      {/* Stage conversion stepper chips */}
-      <div className="grid grid-cols-7 gap-1 pt-2 border-t border-hairline">
-        {stages.map((st, i) => (
-          <div
-            key={st.stage}
-            onClick={() => router.push(`/pipeline?stages=${st.stage}`)}
-            className="flex flex-col items-center p-1.5 rounded hover:bg-hairline/40 transition-colors cursor-pointer text-center"
-          >
-            <span className="text-[10px] text-fg-muted truncate w-full">
-              {st.stage.replace(/_/g, " ").toLowerCase()}
-            </span>
-            <span className="font-mono text-xs font-bold text-fg">
-              <Mono>{st.reached}</Mono>
-            </span>
-            {i > 0 && (
-              <span className="text-[10px] font-mono text-primary font-medium">
-                {st.stepConversionPct}%
-              </span>
-            )}
-          </div>
-        ))}
+                {/* Hover Glass Tooltip */}
+                {isHovered && (
+                  <div className="absolute left-36 top-10 z-30 p-3 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl text-xs flex flex-col gap-1.5 min-w-[200px]">
+                    <div className="flex items-center justify-between gap-4 font-semibold text-fg">
+                      <span>{theme.label}</span>
+                      <span className="font-mono text-primary">{st.reached} reached</span>
+                    </div>
+                    <div className="flex items-center justify-between text-fg-muted font-mono text-[11px]">
+                      <span>Step Conversion:</span>
+                      <span className="font-bold text-fg">{st.stepConversionPct}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-fg-muted font-mono text-[11px]">
+                      <span>Cumulative Pass:</span>
+                      <span className="font-bold text-emerald-400">{st.cumulativePct}%</span>
+                    </div>
+                    {st.dropOff > 0 && (
+                      <div className="pt-1 mt-1 border-t border-hairline/60 flex flex-col gap-0.5 text-[10px] text-fg-muted font-mono">
+                        <span>Drop-off: {st.dropOff} candidates</span>
+                        <span>{st.rejected} rejected · {st.withdrawn} withdrawn</span>
+                      </div>
+                    )}
+                    <span className="text-[10px] text-primary/80 pt-0.5">Click to view in pipeline →</span>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Floating Conversion Chip between bars */}
+              {nextStage && (
+                <div className="flex items-center pl-36 -my-1 py-0.5">
+                  <div
+                    className={clsx(
+                      "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shadow-xs border transition-colors",
+                      nextStage.stepConversionPct >= 80
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                        : nextStage.stepConversionPct < 60
+                        ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
+                        : "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                    )}
+                  >
+                    <ArrowDown className="w-2.5 h-2.5" />
+                    <span>{nextStage.stepConversionPct}% step conversion</span>
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );

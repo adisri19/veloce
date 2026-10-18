@@ -1,37 +1,49 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useJobs } from "@/hooks/use-jobs";
-import { Button } from "../ui/button";
 import { Calendar, Briefcase, ChevronDown, Check } from "lucide-react";
-import { subDays, startOfYear, format } from "date-fns";
+import { subDays, startOfYear } from "date-fns";
+import { clsx } from "clsx";
 
 export interface DateScopeFilterProps {
   from?: string;
   to?: string;
   jobIds: string[];
-  onChange: (filters: { from?: string; to?: string; jobIds: string[] }) => void;
+  activePreset?: string;
+  onChange: (filters: { from?: string; to?: string; jobIds: string[]; preset?: string }) => void;
 }
 
 export function DateScopeFilter({
   from,
   to,
   jobIds,
+  activePreset = "90d",
   onChange,
 }: DateScopeFilterProps) {
   const { data: jobs = [] } = useJobs();
   const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
-  const [activePreset, setActivePreset] = useState<string>("90d");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsJobDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const presets = [
-    { label: "7 Days", id: "7d", days: 7 },
-    { label: "30 Days", id: "30d", days: 30 },
-    { label: "90 Days", id: "90d", days: 90 },
+    { label: "7D", id: "7d", days: 7 },
+    { label: "30D", id: "30d", days: 30 },
+    { label: "90D", id: "90d", days: 90 },
     { label: "YTD", id: "ytd", isYtd: true },
   ];
 
   const handlePresetSelect = (preset: (typeof presets)[0]) => {
-    setActivePreset(preset.id);
     const today = new Date();
     const toIso = today.toISOString();
     let fromIso: string;
@@ -42,24 +54,24 @@ export function DateScopeFilter({
       fromIso = subDays(today, preset.days || 30).toISOString();
     }
 
-    onChange({ from: fromIso, to: toIso, jobIds });
+    onChange({ from: fromIso, to: toIso, jobIds, preset: preset.id });
   };
 
   const handleJobToggle = (id: string) => {
     const nextJobIds = jobIds.includes(id)
       ? jobIds.filter((j) => j !== id)
       : [...jobIds, id];
-    onChange({ from, to, jobIds: nextJobIds });
+    onChange({ from, to, jobIds: nextJobIds, preset: activePreset });
   };
 
   const handleClearJobs = () => {
-    onChange({ from, to, jobIds: [] });
+    onChange({ from, to, jobIds: [], preset: activePreset });
   };
 
   return (
     <div className="flex items-center gap-2.5 flex-wrap">
       {/* Date Presets Segmented Control */}
-      <div className="flex items-center bg-panel border border-hairline rounded-md p-0.5">
+      <div className="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5 shadow-xs">
         <div className="flex items-center px-2 text-fg-muted">
           <Calendar className="w-3.5 h-3.5" />
         </div>
@@ -67,11 +79,12 @@ export function DateScopeFilter({
           <button
             key={p.id}
             onClick={() => handlePresetSelect(p)}
-            className={`px-2.5 py-1 text-xs rounded font-medium transition-colors ${
+            className={clsx(
+              "px-3 py-1 text-xs rounded-md font-mono font-medium transition-all duration-150",
               activePreset === p.id
                 ? "bg-primary text-white font-semibold shadow-xs"
-                : "text-fg-muted hover:text-fg hover:bg-hairline/30"
-            }`}
+                : "text-fg-muted hover:text-fg hover:bg-white/[0.04]"
+            )}
           >
             {p.label}
           </button>
@@ -79,10 +92,10 @@ export function DateScopeFilter({
       </div>
 
       {/* Requisition Scope Dropdown */}
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsJobDropdownOpen(!isJobDropdownOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-panel border border-hairline rounded-md text-xs font-medium text-fg hover:border-fg-muted/40 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-xs font-medium text-fg hover:border-white/12 transition-all shadow-xs"
         >
           <Briefcase className="w-3.5 h-3.5 text-fg-muted" />
           <span>
@@ -90,13 +103,13 @@ export function DateScopeFilter({
               ? "All Requisitions"
               : `${jobIds.length} Requisition${jobIds.length > 1 ? "s" : ""}`}
           </span>
-          <ChevronDown className="w-3.5 h-3.5 text-fg-muted ml-1" />
+          <ChevronDown className="w-3.5 h-3.5 text-fg-muted ml-0.5" />
         </button>
 
         {isJobDropdownOpen && (
-          <div className="absolute top-full mt-1.5 right-0 w-72 bg-panel border border-hairline rounded-lg shadow-xl py-2 z-50 flex flex-col max-h-72 overflow-y-auto">
-            <div className="px-3 pb-2 mb-1 border-b border-hairline flex items-center justify-between text-[11px] font-semibold text-fg-muted uppercase tracking-wider">
-              <span>Filter by Job</span>
+          <div className="absolute top-full mt-1.5 right-0 w-72 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-50 flex flex-col max-h-72 overflow-y-auto">
+            <div className="px-3 pb-2 mb-1 border-b border-white/10 flex items-center justify-between text-[10px] font-semibold text-fg-muted uppercase tracking-wider">
+              <span>Filter by Requisition</span>
               {jobIds.length > 0 && (
                 <button
                   onClick={handleClearJobs}
@@ -113,7 +126,7 @@ export function DateScopeFilter({
                 <button
                   key={job.id}
                   onClick={() => handleJobToggle(job.id)}
-                  className="flex items-center justify-between px-3 py-1.5 text-left text-xs text-fg hover:bg-hairline transition-colors"
+                  className="flex items-center justify-between px-3 py-2 text-left text-xs text-fg hover:bg-white/[0.04] transition-colors"
                 >
                   <div className="flex flex-col min-w-0 pr-2">
                     <span className="font-medium truncate">{job.title}</span>
@@ -122,11 +135,12 @@ export function DateScopeFilter({
                     </span>
                   </div>
                   <div
-                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                    className={clsx(
+                      "w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors",
                       isSelected
                         ? "bg-primary border-primary text-white"
-                        : "border-hairline bg-canvas"
-                    }`}
+                        : "border-white/20 bg-white/[0.02]"
+                    )}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
                   </div>
