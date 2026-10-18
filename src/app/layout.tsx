@@ -5,8 +5,22 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Veloce ATS | Enterprise Applicant Tracking System",
-  description: "Category-defining, high-velocity applicant tracking system with ACID relational pipeline, deterministic AI match scoring, and SLA tracking.",
+  title: {
+    template: "%s · Veloce ATS",
+    default: "Veloce ATS | Enterprise Applicant Tracking System",
+  },
+  description:
+    "Category-defining, high-velocity applicant tracking system with ACID relational pipeline, deterministic AI match scoring, and SLA tracking.",
+  openGraph: {
+    title: "Veloce ATS | Enterprise Applicant Tracking System",
+    description:
+      "Enterprise ATS with ACID relational pipeline, deterministic AI match scoring, and SLA tracking.",
+    type: "website",
+    siteName: "Veloce ATS",
+  },
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

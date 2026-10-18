@@ -91,6 +91,18 @@ export function UserSwitcher() {
                 );
               })}
             </div>
+            <div className="border-t border-hairline pt-1 px-1">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  useUiStore.getState().setTourOpen(true);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-primary font-semibold hover:bg-primary-muted transition-colors text-left"
+              >
+                <UserCircle2 className="w-4 h-4" />
+                <span>Launch Interactive Tour</span>
+              </button>
+            </div>
           </div>
         </>
       )}
