@@ -62,7 +62,7 @@ function CompareContent() {
   // For the Empty State candidate picker
   const { data: allAppsData } = useApplications();
   const { data: jobs = [] } = useJobs();
-  const allApplications = allAppsData?.data || [];
+  const allApplications = useMemo(() => allAppsData?.data || [], [allAppsData?.data]);
 
   const [pickerSearch, setPickerSearch] = useState("");
   const [selectedPickerJobId, setSelectedPickerJobId] = useState("");
