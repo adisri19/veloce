@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:sqlite": "tsx scripts/make-sqlite-schema.ts && prisma generate --schema prisma/schema.sqlite.prisma && DATABASE_URL=file:./dev.db prisma db push --schema prisma/schema.sqlite.prisma && DATABASE_URL=file:./dev.db tsx prisma/seed.ts && DATABASE_URL=file:./dev.db next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
