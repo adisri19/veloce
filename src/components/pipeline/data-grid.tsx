@@ -109,17 +109,20 @@ export function DataGrid({ applications }: DataGridProps) {
     }
   }, [allVisibleSelected, applications, clear, selectAll]);
 
-  const handleQuickChangeStage = (app: ApplicationListItem, newStage: Stage, e: React.MouseEvent) => {
-    e.stopPropagation();
-    stageMutation.mutate({
-      applicationId: app.id,
-      input: {
-        toStage: newStage,
-        expectedVersion: app.version,
-      },
-    });
-    setActiveStageMenuAppId(null);
-  };
+  const handleQuickChangeStage = useCallback(
+    (app: ApplicationListItem, newStage: Stage, e: React.MouseEvent) => {
+      e.stopPropagation();
+      stageMutation.mutate({
+        applicationId: app.id,
+        input: {
+          toStage: newStage,
+          expectedVersion: app.version,
+        },
+      });
+      setActiveStageMenuAppId(null);
+    },
+    [stageMutation]
+  );
 
   const columns = useMemo(
     () => [
@@ -410,6 +413,7 @@ export function DataGrid({ applications }: DataGridProps) {
       handleCheckboxClick,
       handleHeaderCheckbox,
       handleSortToggle,
+      handleQuickChangeStage,
     ]
   );
 

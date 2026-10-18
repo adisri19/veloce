@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -12,11 +12,11 @@ import { SourceChart } from "@/components/dashboard/source-chart";
 import { RequisitionHealth } from "@/components/dashboard/requisition-health";
 import { NeedsAttentionQueue } from "@/components/dashboard/needs-attention-queue";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
+import { AlertCircle, RefreshCw, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -200,5 +200,23 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex-1 flex flex-col p-6 gap-6 max-w-[1600px] w-full mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

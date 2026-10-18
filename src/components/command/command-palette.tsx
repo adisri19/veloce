@@ -75,8 +75,8 @@ export function CommandPalette() {
         if (res.ok) {
           const json = await res.json();
           setData(json.data);
-          if (json.data.candidates.length > 0 && !selectedCandidate) {
-            setSelectedCandidate(json.data.candidates[0]);
+          if (json.data.candidates.length > 0) {
+            setSelectedCandidate((prev: any) => prev || json.data.candidates[0]);
           }
         }
       } catch {

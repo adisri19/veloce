@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Mono } from "./mono";
 
 export interface AnimatedNumberProps {
@@ -14,21 +14,25 @@ export interface AnimatedNumberProps {
 
 export function AnimatedNumber({
   value,
-  duration = 800,
+  duration = 600,
   decimals = 0,
   prefix = "",
   suffix = "",
-  className = "",
+  className,
 }: AnimatedNumberProps) {
   const [displayValue, setDisplayValue] = useState(value);
+  const currentValRef = useRef(value);
 
   useEffect(() => {
     let startTime: number | null = null;
-    const startValue = displayValue;
+    const startValue = currentValRef.current;
     const endValue = value;
     const diff = endValue - startValue;
 
-    if (diff === 0) return;
+    if (diff === 0) {
+      currentValRef.current = endValue;
+      return;
+    }
 
     let animFrame: number;
 
@@ -42,11 +46,13 @@ export function AnimatedNumber({
       const current = startValue + diff * easeOut;
 
       setDisplayValue(current);
+      currentValRef.current = current;
 
       if (progress < 1) {
         animFrame = requestAnimationFrame(step);
       } else {
         setDisplayValue(endValue);
+        currentValRef.current = endValue;
       }
     };
 

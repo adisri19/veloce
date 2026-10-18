@@ -381,9 +381,35 @@ DATABASE_URL=file:./dev.db npm run build
 
 ---
 
-## 9. Security & Compliance Notes
+## 9. SLA Definitions & Breach Calculations
+
+Every active requisition configures a granular SLA dictionary (`slaDaysPerStage`: `{ SOURCED: 2, APPLIED: 3, SCREENING: 5, TECHNICAL_INTERVIEW: 5, SYSTEM_DESIGN: 5, OFFER: 3 }`).
+
+### Dwell Calculation & States:
+1. **Dwell Time**:
+   $$\text{dwellDays} = \frac{\text{now} - \text{stageEnteredAt}}{86400 \times 1000}$$
+2. **SLA State Tri-Band**:
+   - **`OK`**: $\text{dwellDays} \le 0.75 \times \text{slaDays}$ (healthy velocity).
+   - **`WARNING`**: $0.75 \times \text{slaDays} < \text{dwellDays} \le \text{slaDays}$ (yellow alert; approaching SLA expiration).
+   - **`BREACHED`**: $\text{dwellDays} > \text{slaDays}$ (rose pulsing alert; critical SLA violation).
+3. **Terminal Stage Invariant**:
+   Terminal stages (`HIRED`, `REJECTED`, `WITHDRAWN`) do not track active dwell SLAs and always report status `OK`.
+
+---
+
+## 10. Security & Compliance Notes
 
 1. **Webhook HMAC Signatures**: All outgoing automation webhooks are signed using HMAC-SHA256 with the secret configured in `WEBHOOK_SIGNING_SECRET`, delivered in the `X-Veloce-Signature` header.
 2. **Strict RBAC Enforcement**: Role-based access control matrix is evaluated in middleware and services; interviewers cannot approve offers or alter requisitions.
 3. **Data Protection**: Private notes are strictly filtered on the server and never sent to unauthorized roles over the wire.
 4. **Append-Only Immutability**: All stage transitions and administrative mutations generate non-nullable transition and audit logs.
+
+---
+
+## 11. Product Roadmap
+
+- [ ] **Multi-Calendar Native Sync**: Two-way Google Workspace & Microsoft 365 calendar synchronization with automatic interviewer availability free-busy overlay.
+- [ ] **Self-Service Candidate Portal**: Branded scheduling portal allowing candidates to pick preferred interview slots within calibrated interviewer availability windows.
+- [ ] **AI Sourcing Chrome Extension**: LinkedIn & GitHub sourcing sidecar that extracts candidate resumes and scores them against open requisitions with 1-click pipeline import.
+- [ ] **E-Signature & Offer Letter Generator**: Cryptographically verifiable PDF offer generation with DocuSign/HelloSign webhooks and automatic salary band compliance checks.
+- [ ] **Predictive Time-to-Fill Forecasting**: Monte Carlo simulations forecasting hiring completion dates per department based on historical funnel velocity and requisition health.
