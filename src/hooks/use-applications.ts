@@ -15,7 +15,7 @@ interface ApplicationsApiResponse {
   };
 }
 
-export function useApplications(filters: Record<string, any>) {
+export function useApplications(filters: Record<string, any> = {}) {
   return useQuery({
     queryKey: queryKeys.applications.list(filters),
     queryFn: async (): Promise<ApplicationsApiResponse> => {
