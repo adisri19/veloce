@@ -1,5 +1,5 @@
 import { prisma, isSqlite } from "../db";
-import { fromList, toList, jsonIn } from "../db-compat";
+import { fromList, toList, jsonIn, jsonOut } from "../db-compat";
 import { createPrng, pick, randInt } from "./prng";
 import { SEED_USERS, SEED_JOBS } from "./data";
 import { Stage, Recommendation, RejectionReason } from "../validations/common";
@@ -49,12 +49,12 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     email: "sarah.j.design@outlook.com",
     location: "Austin, TX",
     timezone: "America/Chicago",
-    title: "Staff Product Designer",
+    title: "Product Designer",
     company: "Dell Technologies",
-    expYears: 8,
-    salary: 190000,
+    expYears: 4, // 1 yr below min 5
+    salary: 195000,
     noticeDays: 14,
-    skills: ["Figma", "Design Systems", "UI/UX Design", "Wireframing", "Interaction Design"],
+    skills: ["Figma", "Design Systems", "UI/UX Design"], // missing Wireframing
     source: "Referral",
     jobCode: "REQ-2026-05",
     targetStage: "SOURCED",
@@ -65,12 +65,12 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     email: "tariq.mansoor@ai-lab.io",
     location: "Toronto, Canada",
     timezone: "America/Toronto",
-    title: "Research Engineer",
+    title: "Data Scientist",
     company: "Cohere",
-    expYears: 5,
-    salary: 220000,
+    expYears: 3, // below min 4
+    salary: 260000, // above max 250k
     noticeDays: 30,
-    skills: ["Python", "PyTorch", "Large Language Models", "Machine Learning", "RAG"],
+    skills: ["Python", "Machine Learning"], // missing PyTorch & LLM (2 of 4)
     source: "LinkedIn",
     jobCode: "REQ-2026-03",
     targetStage: "SOURCED",
@@ -85,7 +85,7 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     timezone: "America/Los_Angeles",
     title: "Cloud Infrastructure Engineer",
     company: "Microsoft",
-    expYears: 6,
+    expYears: 7,
     salary: 210000,
     noticeDays: 30,
     skills: ["Python", "Kubernetes", "Docker", "AWS", "Terraform", "Prometheus"],
@@ -101,10 +101,10 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     timezone: "America/Vancouver",
     title: "Senior Fullstack Engineer",
     company: "Hootsuite",
-    expYears: 6,
-    salary: 195000,
+    expYears: 8,
+    salary: 215000,
     noticeDays: 15,
-    skills: ["TypeScript", "React", "Next.js", "Tailwind CSS", "GraphQL"],
+    skills: ["TypeScript", "React", "Next.js", "Tailwind CSS", "Framer Motion"],
     source: "Inbound",
     jobCode: "REQ-2026-02",
     targetStage: "APPLIED",
@@ -118,9 +118,9 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     title: "Backend Engineer",
     company: "Nubank",
     expYears: 5,
-    salary: 190000,
+    salary: 200000,
     noticeDays: 30,
-    skills: ["TypeScript", "Node.js", "PostgreSQL", "Kubernetes", "Redis"],
+    skills: ["TypeScript", "Node.js", "PostgreSQL"], // missing Kubernetes
     source: "Referral",
     jobCode: "REQ-2026-01",
     targetStage: "APPLIED",
@@ -149,10 +149,10 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     timezone: "Asia/Kolkata",
     title: "AI Research Associate",
     company: "Wipro AI Labs",
-    expYears: 4,
-    salary: 205000,
+    expYears: 3, // 1 yr below min 4
+    salary: 220000,
     noticeDays: 45,
-    skills: ["Python", "PyTorch", "Large Language Models", "Machine Learning", "Hugging Face"],
+    skills: ["Python", "PyTorch", "Machine Learning"], // missing LLM
     source: "LinkedIn",
     jobCode: "REQ-2026-03",
     targetStage: "APPLIED",
@@ -197,12 +197,12 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     email: "arjun.nair@chennai.in",
     location: "San Jose, CA",
     timezone: "America/Los_Angeles",
-    title: "MLOps Architect",
+    title: "MLOps Engineer",
     company: "Cisco Systems",
-    expYears: 9,
-    salary: 230000,
+    expYears: 6,
+    salary: 220000,
     noticeDays: 30,
-    skills: ["Python", "Kubernetes", "Docker", "AWS", "Ray", "vLLM"],
+    skills: ["Python", "Kubernetes", "Docker"], // missing AWS (3 of 4)
     source: "Agency",
     jobCode: "REQ-2026-04",
     targetStage: "SCREENING",
@@ -229,12 +229,12 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     email: "liam.oconnor@dublin-fintech.ie",
     location: "Dublin, Ireland",
     timezone: "Europe/Dublin",
-    title: "Senior Product Manager",
+    title: "Product Manager",
     company: "Stripe",
-    expYears: 9,
-    salary: 245000,
+    expYears: 7,
+    salary: 285000, // above max 270k
     noticeDays: 30,
-    skills: ["Product Management", "Roadmapping", "Product Analytics", "Agile", "A/B Testing"],
+    skills: ["Product Management", "Roadmapping", "Product Analytics"], // missing Agile (3 of 4)
     source: "Executive Search",
     jobCode: "REQ-2026-06",
     targetStage: "SCREENING",
@@ -282,9 +282,9 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     title: "Senior UX Specialist",
     company: "N26",
     expYears: 6,
-    salary: 185000,
+    salary: 190000,
     noticeDays: 30,
-    skills: ["Figma", "Design Systems", "UI/UX Design", "Wireframing", "A/B Testing"],
+    skills: ["Figma", "Design Systems", "UI/UX Design"], // missing Wireframing (3 of 4)
     source: "Inbound",
     jobCode: "REQ-2026-05",
     targetStage: "TECHNICAL_INTERVIEW",
@@ -377,12 +377,12 @@ const CANDIDATES_DATA: CandidateSeedTemplate[] = [
     email: "maya.lin@growth-design.co",
     location: "Seattle, WA",
     timezone: "America/Los_Angeles",
-    title: "Staff Product Designer",
+    title: "Product Designer",
     company: "Airbnb",
-    expYears: 8,
-    salary: 205000,
+    expYears: 5,
+    salary: 200000,
     noticeDays: 14,
-    skills: ["Figma", "Design Systems", "UI/UX Design", "Wireframing", "Interaction Design"],
+    skills: ["Figma", "UI/UX Design", "Wireframing"], // missing Design Systems (3 of 4)
     source: "Executive Search",
     jobCode: "REQ-2026-05",
     targetStage: "SYSTEM_DESIGN",
@@ -694,6 +694,28 @@ export async function runSeed(options?: { reset?: boolean }): Promise<{ elapsedM
     const publicCode = `CAND-${1000 + i + 1}`;
     const job = createdJobs.get(cData.jobCode)!;
 
+    const jobKeywords = toList(job.domainKeywords);
+    const isTopTier =
+      ["OFFER", "HIRED"].includes(cData.targetStage) ||
+      cData.name === "Dr. Ethan Wright" ||
+      cData.name === "Carlos Mendoza" ||
+      cData.name === "Alexei Volkov" ||
+      cData.name === "Gabriel Dupont" ||
+      cData.name === "Chloe Dubois" ||
+      cData.name === "Ananya Iyer" ||
+      cData.name === "Devon Miller";
+    const isMidTier =
+      ["TECHNICAL_INTERVIEW", "SYSTEM_DESIGN"].includes(cData.targetStage) ||
+      cData.name === "Mei-Ling Zhou" ||
+      cData.name === "Fatima Al-Hassan" ||
+      cData.name === "Ingrid Lindqvist" ||
+      cData.name === "Kenji Sato";
+    const domainSnippet = isTopTier
+      ? `Specialized production expertise in ${jobKeywords.join(", ")}.`
+      : isMidTier
+      ? `Demonstrated experience working with ${jobKeywords.slice(0, 2).join(" and ")}.`
+      : "";
+
     // Realistic resume text generator
     const resumeText = `
 ${cData.name}
@@ -703,7 +725,7 @@ GitHub: github.com/${cData.name.toLowerCase().replace(/[^a-z]/g, "")}
 
 PROFESSIONAL SUMMARY:
 Accomplished ${cData.title} with over ${cData.expYears} years of deep production experience at ${cData.company}. 
-Proven track record architecting resilient systems, leading cross-functional squads, and delivering measurable enterprise impact.
+Proven track record architecting resilient systems, leading cross-functional squads, and delivering measurable enterprise impact. ${domainSnippet}
 
 SKILLS:
 ${cData.skills.join(", ")}
@@ -769,13 +791,16 @@ B.S. in Computer Science & Applied Mathematics, Top Honors.
     const kanbanOrder = stageOrders[cData.targetStage];
     stageOrders[cData.targetStage] += 1000;
 
-    let daysInCurrentStage = 2;
-    const slaAllowed = 5;
+    const slaPerStage = jsonOut<Record<string, number>>(job.slaDaysPerStage) || {};
+    const slaAllowed = slaPerStage[cData.targetStage] ?? 5;
+    let daysInCurrentStage = 1.2;
 
     if (cData.slaBreachType === "BREACHED") {
-      daysInCurrentStage = slaAllowed + 3; // Guaranteed breach
+      daysInCurrentStage = slaAllowed + 2.5; // Guaranteed breach
     } else if (cData.slaBreachType === "WARNING") {
-      daysInCurrentStage = 4.2; // > 0.75 * 5 (3.75)
+      daysInCurrentStage = slaAllowed * 0.85; // Guaranteed warning (>0.75 * sla and <= sla)
+    } else {
+      daysInCurrentStage = Math.max(0.5, Math.min(2.0, slaAllowed * 0.3)); // Safe OK
     }
 
     const stageEnteredAt = new Date(now.getTime() - daysInCurrentStage * 24 * 3600 * 1000);

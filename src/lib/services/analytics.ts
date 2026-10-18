@@ -426,10 +426,19 @@ export async function getDashboardAnalytics(params: {
     const coverageRatio = neededCandidates > 0 ? Math.min(1, activeCount / neededCandidates) : 1;
 
     let healthScore = 100 * coverageRatio - jobSlaBreaches * 8 - (daysOpen > 60 ? 15 : 0);
+    if (j.status === "OPEN" && jobSlaBreaches > 0) {
+      healthScore = Math.min(85, healthScore);
+    }
     healthScore = Math.max(10, Math.min(100, Math.round(healthScore)));
 
-    const healthLabel: "HEALTHY" | "AT_RISK" | "CRITICAL" =
-      healthScore >= 75 ? "HEALTHY" : healthScore >= 45 ? "AT_RISK" : "CRITICAL";
+    let healthLabel: "HEALTHY" | "AT_RISK" | "CRITICAL" | "FILLED" | "ON_HOLD";
+    if (j.status === "CLOSED") {
+      healthLabel = "FILLED";
+    } else if (j.status === "PAUSED") {
+      healthLabel = "ON_HOLD";
+    } else {
+      healthLabel = healthScore >= 75 ? "HEALTHY" : healthScore >= 45 ? "AT_RISK" : "CRITICAL";
+    }
 
     return {
       id: j.id,

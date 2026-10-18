@@ -133,7 +133,7 @@ export interface AnalyticsDashboardData {
     slaBreaches: number;
     avgMatchScore: number;
     healthScore: number;
-    healthLabel: "HEALTHY" | "AT_RISK" | "CRITICAL";
+    healthLabel: "HEALTHY" | "AT_RISK" | "CRITICAL" | "FILLED" | "ON_HOLD";
   }[];
   needsAttention: {
     id: string;

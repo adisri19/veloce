@@ -97,6 +97,9 @@ export async function assertSeedInvariants(): Promise<void> {
   if (slaBreachedCount < 4) {
     throw new Error(`Invariant failed: expected at least 4 SLA breached apps, got ${slaBreachedCount}`);
   }
+  if (slaWarningCount < 4) {
+    throw new Error(`Invariant failed: expected at least 4 SLA warning apps, got ${slaWarningCount}`);
+  }
 
   // Check Headcount consistency
   const jobs = await prisma.jobRequisition.findMany();

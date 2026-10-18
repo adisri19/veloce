@@ -25,16 +25,30 @@ export interface RequisitionHealthProps {
     slaBreaches: number;
     avgMatchScore: number;
     healthScore: number;
-    healthLabel: "HEALTHY" | "AT_RISK" | "CRITICAL";
+    healthLabel: "HEALTHY" | "AT_RISK" | "CRITICAL" | "FILLED" | "ON_HOLD";
   }[];
 }
 
 export function RequisitionHealth({ requisitions }: RequisitionHealthProps) {
   const getHealthBadge = (
-    label: "HEALTHY" | "AT_RISK" | "CRITICAL",
+    label: "HEALTHY" | "AT_RISK" | "CRITICAL" | "FILLED" | "ON_HOLD",
     score: number
   ) => {
     switch (label) {
+      case "FILLED":
+        return (
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-hairline text-fg-muted border border-hairline/80">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            <span>Filled</span>
+          </span>
+        );
+      case "ON_HOLD":
+        return (
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <AlertTriangle className="w-3 h-3 text-amber-400" />
+            <span>On hold</span>
+          </span>
+        );
       case "HEALTHY":
         return (
           <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-success-surface text-success border border-success/30">
@@ -44,7 +58,7 @@ export function RequisitionHealth({ requisitions }: RequisitionHealthProps) {
         );
       case "AT_RISK":
         return (
-          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-warning-surface text-warning border border-warning/30">
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-warn-surface text-warn border border-warn/30">
             <AlertTriangle className="w-3 h-3" />
             <span>{score} • At Risk</span>
           </span>
