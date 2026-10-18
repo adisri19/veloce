@@ -7,8 +7,9 @@
   --panel: #FFFFFF;
   --card: #FFFFFF;
   --hairline: #E4E4E7;
+  --hairline-subtle: rgba(228, 228, 231, 0.6);
   --fg: #09090B;
-  --fg-muted: #52525B;
+  --fg-muted: #71717A;
   --primary: #4F46E5;
   --primary-hover: #4338CA;
   --primary-muted: rgba(79, 70, 229, 0.1);
@@ -18,13 +19,25 @@
   --warn-surface: rgba(217, 119, 6, 0.1);
   --danger: #E11D48;
   --danger-surface: rgba(225, 29, 72, 0.1);
+
+  /* Stage Color Variables */
+  --stage-sourced: #64748B;
+  --stage-applied: #38BDF8;
+  --stage-screening: #6366F1;
+  --stage-technical: #A78BFA;
+  --stage-system-design: #E879F9;
+  --stage-offer: #FBBF24;
+  --stage-hired: #34D399;
+  --stage-rejected: #FB7185;
+  --stage-withdrawn: #71717A;
 }
 
 .dark {
   --canvas: #09090B;
-  --panel: #121215;
-  --card: #18181B;
-  --hairline: #27272A;
+  --panel: #111114;
+  --card: rgba(255, 255, 255, 0.03);
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-subtle: rgba(255, 255, 255, 0.04);
   --fg: #FAFAFA;
   --fg-muted: #A1A1AA;
   --primary: #6366F1;
@@ -43,6 +56,19 @@
   box-sizing: border-box;
 }
 
+/* Enforce focus-visible only to prevent stuck focus rings */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 body {
   background-color: var(--canvas);
   color: var(--fg);
@@ -51,6 +77,154 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Fixed Aurora background effect */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.dark .aurora-blob-1 {
+  position: absolute;
+  top: -15%;
+  left: 20%;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%);
+  filter: blur(80px);
+  will-change: transform;
+  animation: aurora-drift-1 60s infinite alternate ease-in-out;
+}
+
+.dark .aurora-blob-2 {
+  position: absolute;
+  top: 30%;
+  right: 10%;
+  width: 45vw;
+  height: 45vw;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, rgba(139, 92, 246, 0) 70%);
+  filter: blur(90px);
+  will-change: transform;
+  animation: aurora-drift-2 75s infinite alternate ease-in-out;
+}
+
+.aurora-noise {
+  position: fixed;
+  inset: 0;
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+@keyframes aurora-drift-1 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8vw, 6vh, 0) scale(1.1);
+  }
+  100% {
+    transform: translate3d(-5vw, 10vh, 0) scale(0.95);
+  }
+}
+
+@keyframes aurora-drift-2 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-10vw, -8vh, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(6vw, 4vh, 0) scale(0.92);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob-1,
+  .aurora-blob-2 {
+    animation: none !important;
+  }
+}
+
+/* Glass Surface Styles */
+.glass-panel {
+  background: rgba(18, 18, 21, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:not(.dark) .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(60deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4), rgba(52, 211, 153, 0.4));
+  padding: 1px;
+  border-radius: 14px;
+}
+
+.gradient-border > div {
+  border-radius: 13px;
+}
+
+/* Spotlight Card Base */
+.spotlight-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.dark .spotlight-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:not(.dark) .spotlight-card {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dark .spotlight-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    600px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(99, 102, 241, 0.07),
+    transparent 40%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
 }
 
 .tabular-nums {

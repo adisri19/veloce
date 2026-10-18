@@ -9,7 +9,7 @@ export function Mono({ children, className, ...props }: MonoProps) {
   return (
     <span
       className={clsx(
-        "font-mono tabular-nums tracking-tight font-medium text-xs",
+        "font-mono tabular-nums whitespace-nowrap tracking-tight font-medium text-xs",
         className
       )}
       {...props}
