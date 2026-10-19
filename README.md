@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="https://veloce-blush-tau.vercel.app"><strong>Live Demo ↗</strong></a> •
   <a href="#1-quickstart"><strong>Quickstart</strong></a> •
   <a href="#2-live-demo--60-second-interactive-tour"><strong>Interactive Tour</strong></a> •
   <a href="#3-feature-gallery"><strong>Screenshots</strong></a> •
@@ -87,7 +88,9 @@ npm run start
 
 ## 2. Live Demo & 60-Second Interactive Tour
 
-When opening **[http://localhost:3000](http://localhost:3000)**, test these five core flows:
+Experience the live production application at **[https://veloce-blush-tau.vercel.app](https://veloce-blush-tau.vercel.app)** (or locally on `http://localhost:3000`).
+
+Test these five core flows:
 
 1. **Linear-Speed Kanban Drag & Drop**:
    - Navigate to `/pipeline`.
